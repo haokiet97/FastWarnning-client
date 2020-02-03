@@ -21,7 +21,6 @@ def blur_color_img(img, kernel_width=5, kernel_height=5, sigma_x=2, sigma_y=2):
     img[:, :, 2] = cv2.GaussianBlur(img[:, :, 2], ksize=(kernel_width, kernel_height), sigmaX=sigma_x, sigmaY=sigma_y)
     return img
 
-
 def background_subtraction(fg_img, bg_img, diff_threshold=30):
     fg_img = blur_color_img(fg_img, 5, 5, 4, 4)
     bg_img = blur_color_img(bg_img, 5, 5, 4, 4)
@@ -49,13 +48,14 @@ def main(foreground_img, background_img):
 
 def send_to_server(host, port, token, title, base64_img):
     try:
-        cn.send_photo_to_server(host, port, token, title, "data:image/png;base64," + base64_img)
+        _respone = cn.send_photo_to_server(host, port, token, title, "data:image/png;base64,[" + base64_img + "]")
+        print(_respone)
     except:
         try:
             cn.send_photo_to_server(host, port, token, title, "data:image/png;base64," + base64_img)
         except:
             try:
-                print("trying save file to local!")
+                print("Trying save file to local!")
                 img_data = base64.b64decode(base64_img)
                 file_name = title+".png"
                 f = open(file_name, "wb")
@@ -166,13 +166,18 @@ if __name__ == "__main__":
                 node_time = time.time()
                 # if step time send data to server
                 if (node_time - root_time > FLAGS.steptime):
+                    print("--Start send to server!--")
+                    print(node_time)
                     str_img = base64.b64encode(buffered.getvalue()).decode()
                     proc = Process(target=send_to_server, args=(FLAGS.remote_server, FLAGS.port, FLAGS.token, "IMG_" +
                                                                 str(node_time), base64.b64encode(buffered.getvalue()).decode()))
                     proc.start()
+                    # proc.join()
                     # cn.send_photo_to_server(FLAGS.remote_server, FLAGS.port, FLAGS.token, "IMG_" + str(node_time),
                     #                         "data:image/png;base64," + base64.b64encode(buffered.getvalue()).decode())
                     root_time = node_time
+                    print("--End send to server!--")
+
 
             cv2.imshow("FastWarning", fg_img)
 
